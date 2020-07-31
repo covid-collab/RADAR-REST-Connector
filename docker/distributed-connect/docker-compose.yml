@@ -15,6 +15,7 @@ services:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry-1
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
       SCHEMA_REGISTRY_AVRO_COMPATIBILITY_LEVEL: none
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_LOCATION: ${KAFKA_CONNECT_SSL_TRUSTSTORE_LOCATION}
       KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS: 5000
 
   #---------------------------------------------------------------------------#
