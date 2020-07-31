@@ -11,7 +11,6 @@
     "fitbit.max.users.per.poll": 10,
     "fitbit.user.repository.class": "org.radarbase.connect.rest.fitbit.user.firebase.CovidCollabFirebaseUserRepository",
     "fitbit.user.repository.url": "http://localhost:8080/",
-
     "fitbit.api.intraday": "true"
   }
 }
