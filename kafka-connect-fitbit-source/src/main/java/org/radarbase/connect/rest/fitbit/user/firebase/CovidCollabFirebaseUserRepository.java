@@ -1,5 +1,7 @@
 package org.radarbase.connect.rest.fitbit.user.firebase;
 
+import static org.radarbase.connect.rest.fitbit.user.firebase.FirebaseFitbitAuthDetails.OAUTH_KEY;
+
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentChange;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -37,17 +39,17 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
   private static final Logger logger =
       LoggerFactory.getLogger(CovidCollabFirebaseUserRepository.class);
 
-  private final Map<String, FirebaseUser> cachedUsers = new HashMap<>();
+  private static final Map<String, FirebaseUser> cachedUsers = new HashMap<>();
+  private static ListenerRegistration fitbitCollectionListenerRegistration;
+  private static boolean hasPendingUpdates = true;
   private CollectionReference userCollection;
   private CollectionReference fitbitCollection;
   private FitbitTokenService fitbitTokenService;
   private List<String> allowedUsers;
-  private ListenerRegistration fitbitCollectionListenerRegistration;
-  private boolean hasPendingUpdates = true;
 
   @Override
   public User get(String key) throws IOException {
-    return this.cachedUsers.getOrDefault(key, createUser(key));
+    return cachedUsers.getOrDefault(key, createUser(key));
   }
 
   @Override
@@ -84,7 +86,7 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
     if (userCredentials.hasRefreshToken() && userCredentials.getAccessToken() != null) {
       authDetails.setOauth2Credentials(userCredentials);
       updateDocument(fitbitCollection.document(user.getId()), authDetails);
-      this.cachedUsers.get(user.getId()).setFitbitAuthDetails(authDetails);
+      cachedUsers.get(user.getId()).setFitbitAuthDetails(authDetails);
       return userCredentials.getAccessToken();
     } else {
       throw new IOException("There was a problem refreshing the token.");
@@ -93,13 +95,13 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
 
   @Override
   public boolean hasPendingUpdates() {
-    return this.hasPendingUpdates;
+    return hasPendingUpdates;
   }
 
   @Override
   public void applyPendingUpdates() throws IOException {
     if (this.hasPendingUpdates()) {
-      this.hasPendingUpdates = false;
+      hasPendingUpdates = false;
     } else {
       throw new IOException(
           "No pending updates available. Try calling this method only when updates are available");
@@ -129,8 +131,8 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
      * sufficiently upto date. Moreover, not every document in the user collection will have linked
      * the fitbit. In the future, we might listen to user collection too if required.
      */
-    if (this.fitbitCollectionListenerRegistration == null) {
-      this.fitbitCollectionListenerRegistration = initListener(fitbitCollection, this::onEvent);
+    if (fitbitCollectionListenerRegistration == null) {
+      fitbitCollectionListenerRegistration = initListener(fitbitCollection, this::onEvent);
       logger.info("Added listener to Fitbit collection for real-time updates.");
     }
 
@@ -151,6 +153,13 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
 
   protected FirebaseUser createUser(
       DocumentSnapshot userSnapshot, DocumentSnapshot fitbitSnapshot) {
+    if (!fitbitSnapshot.contains(OAUTH_KEY)) {
+      logger.warn(
+          "The 'oauth' key for user {} in the fitbit document is not present. Skipping...",
+          fitbitSnapshot.getId());
+      return null;
+    }
+
     // Get the fitbit document for the user which contains Auth Info
     FirebaseFitbitAuthDetails authDetails =
         fitbitSnapshot.toObject(FirebaseFitbitAuthDetails.class);
@@ -190,14 +199,14 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
       if (user != null
           && user.isComplete()
           && (allowedUsers.isEmpty() || allowedUsers.contains(user.getId()))) {
-        FirebaseUser user1 = this.cachedUsers.put(fitbitDocumentSnapshot.getId(), user);
+        FirebaseUser user1 = cachedUsers.put(fitbitDocumentSnapshot.getId(), user);
         if (user1 == null) {
           logger.info("Created new User: {}", fitbitDocumentSnapshot.getId());
         } else {
           logger.info("Updated existing user: {}", user1);
           logger.debug("Updated user is: {}", user);
         }
-        this.hasPendingUpdates = true;
+        hasPendingUpdates = true;
       } else {
         removeUser(fitbitDocumentSnapshot);
       }
@@ -208,10 +217,10 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
   }
 
   private void removeUser(DocumentSnapshot documentSnapshot) {
-    FirebaseUser user = this.cachedUsers.remove(documentSnapshot.getId());
+    FirebaseUser user = cachedUsers.remove(documentSnapshot.getId());
     if (user != null) {
       logger.info("Removed User: {}:", user);
-      this.hasPendingUpdates = true;
+      hasPendingUpdates = true;
     }
   }
 
@@ -226,16 +235,23 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
         snapshots.getDocumentChanges().size(),
         snapshots.getDocuments().size());
     for (DocumentChange dc : snapshots.getDocumentChanges()) {
-      logger.debug("Type: {}", dc.getType());
-      switch (dc.getType()) {
-        case ADDED:
-        case MODIFIED:
-          this.updateUser(dc.getDocument());
-          break;
-        case REMOVED:
-          this.removeUser(dc.getDocument());
-        default:
-          break;
+      try {
+        logger.debug("Type: {}", dc.getType());
+        switch (dc.getType()) {
+          case ADDED:
+          case MODIFIED:
+            this.updateUser(dc.getDocument());
+            break;
+          case REMOVED:
+            this.removeUser(dc.getDocument());
+          default:
+            break;
+        }
+      } catch (Exception exc) {
+        logger.warn(
+            "Could not process document change event for document: {}",
+            dc.getDocument().getId(),
+            exc);
       }
     }
   }
