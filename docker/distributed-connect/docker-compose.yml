@@ -45,6 +45,8 @@ services:
       CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_REST_ADVERTISED_HOST_NAME: ${KAFKA_CONNECT_ADVERTISED_HOSTNAME}
+      CONNECT_SECURITY_PROTOCOL: ${KAFKA_CONNECT_SECURITY_PROTOCOL}
+      CONNECT_SSL_TRUSTSTORE_LOCATION: ${KAFKA_CONNECT_SSL_TRUSTSTORE_LOCATION}
       CONNECT_LOG4J_ROOT_LOGLEVEL: INFO
       CONNECT_PLUGIN_PATH: /usr/share/java,/etc/kafka-connect/jars,/usr/share/java/kafka-connect/plugins
     ports:
