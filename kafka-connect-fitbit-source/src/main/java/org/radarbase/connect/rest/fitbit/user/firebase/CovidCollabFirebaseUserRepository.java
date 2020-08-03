@@ -61,7 +61,7 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
   public String getAccessToken(User user) throws IOException, NotAuthorizedException {
     FitbitOAuth2UserCredentials credentials =
         cachedUsers.get(user.getId()).getFitbitAuthDetails().getOauth2Credentials();
-    if (credentials == null || credentials.isAccessTokenExpired()) {
+    if (credentials==null || credentials.isAccessTokenExpired()) {
       return refreshAccessToken(user);
     }
     return credentials.getAccessToken();
@@ -83,10 +83,12 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
         fitbitTokenService.refreshToken(authDetails.getOauth2Credentials().getRefreshToken());
     logger.debug("Token Refreshed.");
 
-    if (userCredentials.hasRefreshToken() && userCredentials.getAccessToken() != null) {
+    if (userCredentials.hasRefreshToken() && userCredentials.getAccessToken()!=null) {
       authDetails.setOauth2Credentials(userCredentials);
       updateDocument(fitbitCollection.document(user.getId()), authDetails);
-      cachedUsers.get(user.getId()).setFitbitAuthDetails(authDetails);
+      // Should automatically trigger an update in the cache.
+//      ((FirebaseUser) user).setFitbitAuthDetails(authDetails);
+//      cachedUsers.put(user.getId(), (FirebaseUser) user);
       return userCredentials.getAccessToken();
     } else {
       throw new IOException("There was a problem refreshing the token.");
@@ -131,7 +133,7 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
      * sufficiently upto date. Moreover, not every document in the user collection will have linked
      * the fitbit. In the future, we might listen to user collection too if required.
      */
-    if (fitbitCollectionListenerRegistration == null) {
+    if (fitbitCollectionListenerRegistration==null) {
       fitbitCollectionListenerRegistration = initListener(fitbitCollection, this::onEvent);
       logger.info("Added listener to Fitbit collection for real-time updates.");
     }
@@ -170,7 +172,7 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
     logger.debug("User Details: {}", userDetails);
 
     // if auth details are not available, skip this user.
-    if (authDetails == null || authDetails.getOauth2Credentials() == null) {
+    if (authDetails==null || authDetails.getOauth2Credentials()==null) {
       logger.warn(
           "The auth details for user {} in the database are not valid. Skipping...",
           fitbitSnapshot.getId());
@@ -178,7 +180,7 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
     }
 
     // If no user details found, create one with default project.
-    if (userDetails == null) {
+    if (userDetails==null) {
       userDetails = new FirebaseUserDetails();
     }
 
@@ -196,11 +198,11 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
           createUser(
               getDocument(fitbitDocumentSnapshot.getId(), userCollection), fitbitDocumentSnapshot);
       logger.debug("User to be updated: {}", user);
-      if (user != null
+      if (user!=null
           && user.isComplete()
           && (allowedUsers.isEmpty() || allowedUsers.contains(user.getId()))) {
         FirebaseUser user1 = cachedUsers.put(fitbitDocumentSnapshot.getId(), user);
-        if (user1 == null) {
+        if (user1==null) {
           logger.info("Created new User: {}", fitbitDocumentSnapshot.getId());
         } else {
           logger.info("Updated existing user: {}", user1);
@@ -218,14 +220,14 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
 
   private void removeUser(DocumentSnapshot documentSnapshot) {
     FirebaseUser user = cachedUsers.remove(documentSnapshot.getId());
-    if (user != null) {
+    if (user!=null) {
       logger.info("Removed User: {}:", user);
       hasPendingUpdates = true;
     }
   }
 
   private void onEvent(QuerySnapshot snapshots, FirestoreException e) {
-    if (e != null) {
+    if (e!=null) {
       logger.warn("Listen for updates failed: " + e);
       return;
     }
