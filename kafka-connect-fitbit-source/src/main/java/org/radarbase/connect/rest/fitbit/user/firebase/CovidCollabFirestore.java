@@ -66,14 +66,7 @@ public class CovidCollabFirestore {
   public synchronized static CovidCollabFirestore getInstanceFor(
       FitbitRestSourceConnectorConfig connectorConfig) {
     if (restSourceConnectorConfig!=null
-        && restSourceConnectorConfig.getFitbitUsers().equals(connectorConfig.getFitbitUsers())
-        && restSourceConnectorConfig.getFitbitUserRepositoryFirestoreFitbitCollection()
-        .equals(connectorConfig.getFitbitUserRepositoryFirestoreFitbitCollection())
-        && restSourceConnectorConfig.getFitbitUserRepositoryFirestoreUserCollection()
-        .equals(connectorConfig.getFitbitUserRepositoryFirestoreUserCollection())
-        && restSourceConnectorConfig.getExcludedFitbitUsers()
-        .equals(connectorConfig.getExcludedFitbitUsers())
-    ) {
+        && configEquals(restSourceConnectorConfig, connectorConfig)) {
       restSourceConnectorConfig = connectorConfig;
       return _INSTANCE;
     }
@@ -82,6 +75,17 @@ public class CovidCollabFirestore {
       _INSTANCE = new CovidCollabFirestore(connectorConfig);
     }
     return _INSTANCE;
+  }
+
+  private static boolean configEquals(FitbitRestSourceConnectorConfig c1,
+                                FitbitRestSourceConnectorConfig c2) {
+    return c1.getFitbitUsers().equals(c2.getFitbitUsers())
+        && c1.getFitbitUserRepositoryFirestoreFitbitCollection()
+        .equals(c2.getFitbitUserRepositoryFirestoreFitbitCollection())
+        && c1.getFitbitUserRepositoryFirestoreUserCollection()
+        .equals(c2.getFitbitUserRepositoryFirestoreUserCollection())
+        && c1.getExcludedFitbitUsers().equals(c2.getExcludedFitbitUsers())
+        && c1.hasIntradayAccess() == c2.hasIntradayAccess();
   }
 
   public Collection<FirebaseUser> getUsers() {
@@ -167,7 +171,7 @@ public class CovidCollabFirestore {
       FirebaseUser user =
           createUser(
               getDocument(fitbitDocumentSnapshot.getId(), userCollection), fitbitDocumentSnapshot);
-      logger.info("User to be updated: {}", user);
+      logger.debug("User to be updated: {}", user);
       if (checkValidUser(user)) {
         FirebaseUser user1 = cachedUsers.put(user.getId(), user);
         if (user1==null) {
@@ -179,6 +183,7 @@ public class CovidCollabFirestore {
         hasPendingUpdates = true;
       } else if (user!=null && !user.isComplete()) {
         logger.info("User is not complete, skipping...");
+        removeUser(fitbitDocumentSnapshot);
       } else {
         logger.info("User cannot be processed due to constraints");
         removeUser(fitbitDocumentSnapshot);
@@ -200,6 +205,9 @@ public class CovidCollabFirestore {
    * @return true if user is valid, false otherwise.
    */
   private boolean checkValidUser(FirebaseUser user) {
+    if (user!=null && user.getFitbitAuthDetails().getAuthResult()!=null) {
+      logger.info("Http code: {}", user.getFitbitAuthDetails().getAuthResult().getHttpCode());
+    }
     return user!=null
         && user.isComplete()
         && (allowedUsers.isEmpty() || allowedUsers.contains(user.getId()))
