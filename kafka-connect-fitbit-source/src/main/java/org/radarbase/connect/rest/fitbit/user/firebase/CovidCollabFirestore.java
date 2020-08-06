@@ -78,14 +78,14 @@ public class CovidCollabFirestore {
   }
 
   private static boolean configEquals(FitbitRestSourceConnectorConfig c1,
-                                FitbitRestSourceConnectorConfig c2) {
+                                      FitbitRestSourceConnectorConfig c2) {
     return c1.getFitbitUsers().equals(c2.getFitbitUsers())
         && c1.getFitbitUserRepositoryFirestoreFitbitCollection()
         .equals(c2.getFitbitUserRepositoryFirestoreFitbitCollection())
         && c1.getFitbitUserRepositoryFirestoreUserCollection()
         .equals(c2.getFitbitUserRepositoryFirestoreUserCollection())
         && c1.getExcludedFitbitUsers().equals(c2.getExcludedFitbitUsers())
-        && c1.hasIntradayAccess() == c2.hasIntradayAccess();
+        && c1.hasIntradayAccess()==c2.hasIntradayAccess();
   }
 
   public Collection<FirebaseUser> getUsers() {
@@ -185,7 +185,8 @@ public class CovidCollabFirestore {
         logger.info("User is not complete, skipping...");
         removeUser(fitbitDocumentSnapshot);
       } else {
-        logger.info("User cannot be processed due to constraints");
+        logger.info("User {} cannot be processed due to constraints",
+            user==null ? fitbitDocumentSnapshot.getId():user.getId());
         removeUser(fitbitDocumentSnapshot);
       }
     } catch (IOException e) {
@@ -205,9 +206,6 @@ public class CovidCollabFirestore {
    * @return true if user is valid, false otherwise.
    */
   private boolean checkValidUser(FirebaseUser user) {
-    if (user!=null && user.getFitbitAuthDetails().getAuthResult()!=null) {
-      logger.info("Http code: {}", user.getFitbitAuthDetails().getAuthResult().getHttpCode());
-    }
     return user!=null
         && user.isComplete()
         && (allowedUsers.isEmpty() || allowedUsers.contains(user.getId()))

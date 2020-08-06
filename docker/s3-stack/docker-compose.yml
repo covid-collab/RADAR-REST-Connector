@@ -1,6 +1,9 @@
 ---
 version: '2.4'
 
+volumes:
+  s3-connector-offsets: {}
+
 services:
   #---------------------------------------------------------------------------#
   # Schema Registry                                                           #
@@ -29,10 +32,13 @@ services:
     image: radarbase/radar-s3-connector:1.0.0
     restart: on-failure
     volumes:
-      - ./sink-s3.properties:/etc/s3-connect/sink-s3.properties
+      - ./sink-s3.properties:/etc/kafka-connect/sink-s3.properties
       - "${KAFKA_CONNECT_SSL_TRUSTSTORE_LOCATION}:/kafka-truststore"
+      - s3-connector-offsets:/tmp
     depends_on:
       - schema-registry-1
+    ports:
+      - "8083:8083"
     environment:
       CONNECT_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
       CONNECT_REST_PORT: 8083
@@ -62,3 +68,8 @@ services:
       AWS_ACCESS_KEY: "${AWS_ACCESS_KEY}"
       AWS_SECRET_KEY: "${AWS_SECRET_KEY}"
       CONNECT_LOG4J_ROOT_LOGLEVEL: INFO
+    healthcheck:
+      test: ["CMD-SHELL", "curl  -sf localhost:8083/connectors/radar-s3-sink-connector/status | grep -o '\"state\":\"[^\"]*\"' | tr '\\n' ',' | grep -vq FAILED || exit 1"]
+      interval: 1m
+      timeout: 5s
+      retries: 3
