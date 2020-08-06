@@ -22,12 +22,14 @@ public class FirebaseFitbitAuthDetails {
   private Long version;
 
   private FitbitOAuth2UserCredentials oauth2Credentials;
+  private AuthResult authResult;
 
   public FirebaseFitbitAuthDetails() {
     this.oauth2Credentials = new FitbitOAuth2UserCredentials();
     this.startDate = Instant.parse("2017-01-01T00:00:00Z").toEpochMilli();
     this.endDate = Instant.parse("9999-12-31T23:59:59.999Z").toEpochMilli();
     this.version = null;
+    this.authResult = null;
   }
 
   @Exclude
@@ -42,7 +44,7 @@ public class FirebaseFitbitAuthDetails {
 
   @PropertyName("version")
   public void setVersion(Long version) {
-    if (version != null) {
+    if (version!=null) {
       this.version = version;
     }
   }
@@ -54,9 +56,19 @@ public class FirebaseFitbitAuthDetails {
 
   @PropertyName("start_date")
   public void setStartDate(Long startDate) {
-    if (startDate != null) {
+    if (startDate!=null) {
       this.startDate = startDate;
     }
+  }
+
+  @PropertyName("auth_result")
+  public AuthResult getAuthResult() {
+    return authResult;
+  }
+
+  @PropertyName("auth_result")
+  public void setAuthResult(AuthResult authResult) {
+    this.authResult = authResult;
   }
 
   @PropertyName("end_date")
@@ -66,7 +78,7 @@ public class FirebaseFitbitAuthDetails {
 
   @PropertyName("end_date")
   public void setEndDate(Long endDate) {
-    if (endDate != null) {
+    if (endDate!=null) {
       this.endDate = endDate;
     }
   }
@@ -78,7 +90,7 @@ public class FirebaseFitbitAuthDetails {
 
   @PropertyName("source_id")
   public void setSourceId(String sourceId) {
-    if (sourceId != null && !sourceId.trim().isEmpty()) {
+    if (sourceId!=null && !sourceId.trim().isEmpty()) {
       this.sourceId = sourceId;
     }
   }
@@ -91,5 +103,18 @@ public class FirebaseFitbitAuthDetails {
   @PropertyName(OAUTH_KEY)
   public void setOauth2Credentials(FitbitOAuth2UserCredentials oauth2Credentials) {
     this.oauth2Credentials = oauth2Credentials;
+  }
+
+  @Exclude
+  @Override
+  public String toString() {
+    return "FirebaseFitbitAuthDetails{" +
+        "sourceId='" + sourceId + '\'' +
+        ", startDate=" + startDate +
+        ", endDate=" + endDate +
+        ", version=" + version +
+        ", oauth2Credentials=" + "***hidden***" +
+        ", authResult=" + authResult +
+        '}';
   }
 }

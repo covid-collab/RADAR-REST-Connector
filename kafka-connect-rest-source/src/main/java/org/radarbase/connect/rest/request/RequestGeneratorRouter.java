@@ -19,6 +19,7 @@ package org.radarbase.connect.rest.request;
 
 import static org.radarbase.connect.rest.converter.PayloadToSourceRecordConverter.nearFuture;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.stream.Stream;
@@ -37,7 +38,7 @@ public abstract class RequestGeneratorRouter implements RequestGenerator {
     return routes()
         .map(RequestRoute::getTimeOfNextRequest)
         .min(Comparator.naturalOrder())
-        .orElse(nearFuture());
+        .orElse(Instant.now().plus(Duration.ofMinutes(30)));
   }
 
   public abstract Stream<RequestRoute> routes();

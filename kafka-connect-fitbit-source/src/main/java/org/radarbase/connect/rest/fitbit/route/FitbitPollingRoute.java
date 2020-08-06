@@ -213,7 +213,7 @@ public abstract class FitbitPollingRoute implements PollingRequestRoute {
   public Instant getTimeOfNextRequest() {
     return nextPolls()
             .min(Comparator.naturalOrder())
-            .orElse(nearFuture());
+            .orElse(Instant.now().plus(Duration.ofMinutes(30)));
   }
 
   private Map<String, Object> getPartition(User user) {

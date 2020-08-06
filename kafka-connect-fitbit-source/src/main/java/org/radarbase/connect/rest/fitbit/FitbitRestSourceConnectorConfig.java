@@ -53,6 +53,13 @@ public class FitbitRestSourceConnectorConfig extends RestSourceConnectorConfig {
           + "If empty, all users in the user directory will be used.";
   private static final String FITBIT_USERS_DISPLAY = "Fitbit users";
 
+  public static final String FITBIT_USERS_EXCLUDED_CONFIG = "fitbit.users.excluded";
+  private static final String FITBIT_USERS_EXCLUDED_DOC =
+          "The user ID of Fitbit users to exclude in polling, separated by commas. "
+                  + "Non existing user names will be ignored. ";
+  private static final String FITBIT_USERS_EXCLUDED_DISPLAY = "Fitbit users that are to be " +
+          "excluded from processing";
+
   public static final String FITBIT_API_CLIENT_CONFIG = "fitbit.api.client";
   private static final String FITBIT_API_CLIENT_DOC =
       "Client ID for the Fitbit API";
@@ -184,6 +191,16 @@ public class FitbitRestSourceConnectorConfig extends RestSourceConnectorConfig {
             ++orderInGroup,
             Width.SHORT,
             FITBIT_USERS_DISPLAY)
+
+        .define(FITBIT_USERS_EXCLUDED_CONFIG,
+                Type.LIST,
+                Collections.emptyList(),
+                Importance.HIGH,
+                FITBIT_USERS_EXCLUDED_DOC,
+                group,
+                ++orderInGroup,
+                Width.SHORT,
+                FITBIT_USERS_EXCLUDED_DISPLAY)
 
         .define(FITBIT_API_CLIENT_CONFIG,
             Type.STRING,
@@ -389,6 +406,10 @@ public class FitbitRestSourceConnectorConfig extends RestSourceConnectorConfig {
 
   public List<String> getFitbitUsers() {
     return getList(FITBIT_USERS_CONFIG);
+  }
+
+  public List<String> getExcludedFitbitUsers() {
+    return getList(FITBIT_USERS_EXCLUDED_CONFIG);
   }
 
   public String getFitbitClient() {
