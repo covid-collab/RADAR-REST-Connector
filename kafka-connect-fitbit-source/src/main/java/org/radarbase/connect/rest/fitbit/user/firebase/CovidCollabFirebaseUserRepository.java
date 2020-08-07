@@ -2,6 +2,7 @@ package org.radarbase.connect.rest.fitbit.user.firebase;
 
 import com.google.cloud.firestore.CollectionReference;
 import java.io.IOException;
+import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 import javax.ws.rs.NotAuthorizedException;
 import org.radarbase.connect.rest.RestSourceConnectorConfig;
@@ -47,8 +48,12 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
 
   @Override
   public String getAccessToken(User user) throws IOException, NotAuthorizedException {
-    FitbitOAuth2UserCredentials credentials =
-        covidCollabFirestore.getUser(user.getId()).getFitbitAuthDetails().getOauth2Credentials();
+    FirebaseUser firebaseUser = covidCollabFirestore.getUser(user.getId());
+    if (firebaseUser==null) {
+      throw new NoSuchElementException("User " + user + " is not present in this user repository.");
+    }
+    FitbitOAuth2UserCredentials credentials = firebaseUser
+        .getFitbitAuthDetails().getOauth2Credentials();
     if (credentials==null || credentials.isAccessTokenExpired()) {
       return refreshAccessToken(user);
     }
@@ -58,6 +63,9 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
   @Override
   public String refreshAccessToken(User user) throws IOException, NotAuthorizedException {
     FirebaseUser firebaseUser = covidCollabFirestore.getUser(user.getId());
+    if (firebaseUser==null) {
+      throw new NoSuchElementException("User " + user + " is not present in this user repository.");
+    }
     FirebaseFitbitAuthDetails authDetails = firebaseUser.getFitbitAuthDetails();
 
     logger.info("Refreshing token for User: {}", firebaseUser);
