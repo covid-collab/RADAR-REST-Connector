@@ -121,7 +121,7 @@ public class FitbitSourceConnector extends AbstractRestSourceConnector {
             return config;
           })
           .collect(Collectors.toList());
-      this.configuredUsers = fitbitConfig.getUserRepository().stream()
+      this.configuredUsers = fitbitConfig.getUserRepository(repository).stream()
           .collect(Collectors.toSet());
       logger.info("Received userTask Configs {}", userTasks);
       return userTasks;

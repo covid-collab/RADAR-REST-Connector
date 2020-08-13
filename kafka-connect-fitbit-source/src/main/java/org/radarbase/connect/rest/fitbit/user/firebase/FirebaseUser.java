@@ -33,7 +33,7 @@ public class FirebaseUser implements User {
   }
 
   public String getVersion() {
-    return fitbitAuthDetails.getVersion();
+    return fitbitAuthDetails.getVersion().toString();
   }
 
   public void setUuid(String uuid) {
@@ -59,11 +59,11 @@ public class FirebaseUser implements User {
   }
 
   public Instant getStartDate() {
-    return fitbitAuthDetails.getStartDate().toInstant();
+    return Instant.ofEpochMilli(fitbitAuthDetails.getStartDate());
   }
 
   public Instant getEndDate() {
-    return fitbitAuthDetails.getEndDate().toInstant();
+    return Instant.ofEpochMilli(fitbitAuthDetails.getEndDate());
   }
 
   public String getSourceId() {

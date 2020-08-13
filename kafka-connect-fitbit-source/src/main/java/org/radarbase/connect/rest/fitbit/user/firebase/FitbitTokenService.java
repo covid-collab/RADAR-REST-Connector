@@ -3,14 +3,16 @@ package org.radarbase.connect.rest.fitbit.user.firebase;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
-import javax.ws.rs.NotAuthorizedException;
 import okhttp3.Credentials;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.radarbase.connect.rest.fitbit.user.firebase.exception.HttpException;
+import org.radarbase.connect.rest.fitbit.user.firebase.exception.UnauthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,9 +21,9 @@ public class FitbitTokenService {
   private static final Logger logger = LoggerFactory.getLogger(FitbitTokenService.class);
   private final OkHttpClient client;
   private final ObjectMapper mapper;
-  private String clientId;
-  private String clientSecret;
-  private String tokenEndpoint;
+  private final String clientId;
+  private final String clientSecret;
+  private final String tokenEndpoint;
 
   public FitbitTokenService(String clientId, String clientSecret, String tokenEndpoint) {
     this.clientId = clientId;
@@ -37,7 +39,7 @@ public class FitbitTokenService {
   }
 
   public FitbitOAuth2UserCredentials processTokenRequest(FormBody form)
-      throws NotAuthorizedException, IOException {
+      throws UnauthorizedException, HttpException, IOException {
     String credentials = Credentials.basic(clientId, clientSecret);
 
     Request request =
@@ -52,7 +54,7 @@ public class FitbitTokenService {
     try (Response response = client.newCall(request).execute()) {
       if (response.isSuccessful()) {
         ResponseBody responseBody = response.body();
-        if (responseBody == null) {
+        if (responseBody==null) {
           logger.error("Got empty response body");
           throw new IOException("No response from server");
         }
@@ -63,16 +65,28 @@ public class FitbitTokenService {
           return mapper.readValue(responseBodyStr, FitbitOAuth2UserCredentials.class);
         } catch (IOException e) {
           logger.error("Error when deserializing response.", e);
-          throw new NotAuthorizedException("Cannot read token response", e);
+          throw new IOException("Cannot read token response", e);
         }
       } else {
-        throw new NotAuthorizedException(
-            "Failed to execute the request : Response-code :"
-                + response.code()
-                + " received when requesting token from server with "
-                + "message "
-                + response.message());
+        return handleError(response);
       }
+    }
+  }
+
+  private FitbitOAuth2UserCredentials handleError(Response response)
+      throws IOException, UnauthorizedException, HttpException {
+    ResponseBody responseBody = response.body();
+    String errorDescription = "";
+    if (responseBody!=null) {
+      errorDescription = responseBody.string();
+    }
+    if (response.code()==401) {
+      UnauthorizedException ex = new UnauthorizedException(response);
+      ex.setErrorDescription(errorDescription);
+      throw ex;
+    } else {
+      throw new HttpException(new AuthResult(response.code(), response.message(),
+          Instant.now().toEpochMilli(), errorDescription));
     }
   }
 

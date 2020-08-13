@@ -1,5 +1,6 @@
 package org.radarbase.connect.rest.fitbit.user.firebase;
 
+import com.google.cloud.firestore.annotation.Exclude;
 import com.google.cloud.firestore.annotation.IgnoreExtraProperties;
 import com.google.cloud.firestore.annotation.PropertyName;
 
@@ -28,5 +29,13 @@ public class FirebaseUserDetails {
     if (projectId != null && !projectId.trim().isEmpty()) {
       this.projectId = projectId;
     }
+  }
+
+  @Exclude
+  @Override
+  public String toString() {
+    return "FirebaseUserDetails{" +
+            "projectId='" + projectId + '\'' +
+            '}';
   }
 }
