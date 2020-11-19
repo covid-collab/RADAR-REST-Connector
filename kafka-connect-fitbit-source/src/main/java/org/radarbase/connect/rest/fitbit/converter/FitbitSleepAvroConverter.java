@@ -126,6 +126,27 @@ public class FitbitSleepAvroConverter extends FitbitAvroConverter {
                 return new TopicData(intermediateOffset, topic, sleep);
               })
               .collect(Collectors.toList());
+              
+        if (isStages) {
+          List<TopicData> shortData = iterableToStream(s.get("levels").get("shortData"))
+            .map(d -> {
+              IndexedRecord sleep;
+              String topic;
+              String dateTime = d.get("dateTime").asText();
+              int duration = d.get("seconds").asInt();
+              String level = d.get("level").asText(); 
+              sleep = new FitbitSleepStage(
+                dateTime,
+                timeReceived,
+                duration,
+                STAGES_MAP.getOrDefault(level, FitbitSleepStageLevel.UNKNOWN));
+              )
+              topic = sleepStagesTopic;
+              return new TopicData(intermediateOffset, topic, sleep);
+            })
+            .collect(Collectors.toList());
+          allRecords.addAll(shortData);
+        }
 
           // The final group gets the actual offset, to ensure that the group does not get queried
           // again.
