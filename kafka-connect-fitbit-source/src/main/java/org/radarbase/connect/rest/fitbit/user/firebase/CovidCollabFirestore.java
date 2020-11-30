@@ -200,7 +200,9 @@ public class CovidCollabFirestore {
    * 1) The user is not null
    * 2) the user is allowed in the configuration
    * 3) the user is not excluded in the configuration
-   * 4) The user has not auth errors signified by the auth_result key in firebase
+   * 4) The user has not auth errors signified by the auth_result key in firebase. We accept 409
+   * code too since it is just a concurrent request conflict and does not effect the validity of
+   * the tokens.
    *
    * @param user The user to check for validity
    * @return true if user is valid, false otherwise.
@@ -211,7 +213,9 @@ public class CovidCollabFirestore {
         && (allowedUsers.isEmpty() || allowedUsers.contains(user.getId()))
         && (excludedUsers.isEmpty() || !excludedUsers.contains(user.getId()))
         && (user.getFitbitAuthDetails().getAuthResult()==null
-        || user.getFitbitAuthDetails().getAuthResult().getHttpCode()==200);
+        || user.getFitbitAuthDetails().getAuthResult().getHttpCode()==200
+        || user.getFitbitAuthDetails().getAuthResult().getHttpCode()==409
+    );
   }
 
   private void removeUser(DocumentSnapshot documentSnapshot) {

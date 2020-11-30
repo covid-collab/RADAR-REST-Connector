@@ -61,7 +61,8 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
   }
 
   @Override
-  public String refreshAccessToken(User user) throws IOException, NotAuthorizedException {
+  public String refreshAccessToken(User user)
+      throws IOException, NotAuthorizedException {
     FirebaseUser firebaseUser = covidCollabFirestore.getUser(user.getId());
     if (firebaseUser==null) {
       throw new NoSuchElementException("User " + user + " is not present in this user repository.");
@@ -88,8 +89,11 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
       updateDocument(fitbitCollection.document(user.getId()), authDetails);
       throw ex;
     } catch (HttpException ex) {
-      authDetails.setAuthResult(ex.getAuthResult());
-      updateDocument(fitbitCollection.document(user.getId()), authDetails);
+      if (ex.getAuthResult().getHttpCode() != 409) {
+        // We don't update on 409 as another process already refreshed the token
+        authDetails.setAuthResult(ex.getAuthResult());
+        updateDocument(fitbitCollection.document(user.getId()), authDetails);
+      }
       throw new NotAuthorizedException("Failed to Refresh Token", ex,
           ex.getAuthResult().getMessage());
     } catch (IOException ex) {

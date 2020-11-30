@@ -56,7 +56,7 @@ public class FitbitSourceConnector extends AbstractRestSourceConnector {
           Set<? extends User> newUsers =
               getConfig(props, false).getUserRepository(repository).stream()
                   .collect(Collectors.toSet());
-          if (configuredUsers != null && !newUsers.equals(configuredUsers)) {
+          if (configuredUsers!=null && !newUsers.equals(configuredUsers)) {
             logger.info("User info mismatch found. Requesting reconfiguration...");
             reconfigure();
           }
@@ -66,7 +66,7 @@ public class FitbitSourceConnector extends AbstractRestSourceConnector {
       } else {
         logger.info("No pending updates found. Not attempting to refresh users.");
       }
-    }, 0, 5, TimeUnit.MINUTES);
+    }, 3, getConfig(props).getFitbitTaskReconfigureInterval(), TimeUnit.MINUTES);
   }
 
   @Override
@@ -101,7 +101,7 @@ public class FitbitSourceConnector extends AbstractRestSourceConnector {
   private List<Map<String, String>> configureTasks(int maxTasks) {
     Map<String, String> baseConfig = config.originalsStrings();
     FitbitRestSourceConnectorConfig fitbitConfig = getConfig(baseConfig);
-    if (repository == null) {
+    if (repository==null) {
       repository = fitbitConfig.getUserRepository(null);
     }
     // Divide the users over tasks
