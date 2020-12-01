@@ -33,18 +33,15 @@ public class CovidCollabFirestore {
   private final ConcurrentHashMap<String, FirebaseUser> cachedUsers = new ConcurrentHashMap<>();
   private final CollectionReference userCollection;
   private final CollectionReference fitbitCollection;
-  private final List<String> allowedUsers;
-  private final List<String> excludedUsers;
   private ListenerRegistration fitbitCollectionListenerRegistration;
   private boolean hasPendingUpdates = true;
+  private int countAdded = 0;
 
   private CovidCollabFirestore(FitbitRestSourceConnectorConfig fitbitConfig) {
     this.userCollection =
         getFirestore().collection(fitbitConfig.getFitbitUserRepositoryFirestoreUserCollection());
     this.fitbitCollection =
         getFirestore().collection(fitbitConfig.getFitbitUserRepositoryFirestoreFitbitCollection());
-    this.allowedUsers = fitbitConfig.getFitbitUsers();
-    this.excludedUsers = fitbitConfig.getExcludedFitbitUsers();
 
     /**
      * Currently, we only listen for the fitbit collection, as it contains most information while
@@ -79,12 +76,10 @@ public class CovidCollabFirestore {
 
   private static boolean configEquals(FitbitRestSourceConnectorConfig c1,
                                       FitbitRestSourceConnectorConfig c2) {
-    return c1.getFitbitUsers().equals(c2.getFitbitUsers())
-        && c1.getFitbitUserRepositoryFirestoreFitbitCollection()
+    return c1.getFitbitUserRepositoryFirestoreFitbitCollection()
         .equals(c2.getFitbitUserRepositoryFirestoreFitbitCollection())
         && c1.getFitbitUserRepositoryFirestoreUserCollection()
         .equals(c2.getFitbitUserRepositoryFirestoreUserCollection())
-        && c1.getExcludedFitbitUsers().equals(c2.getExcludedFitbitUsers())
         && c1.hasIntradayAccess()==c2.hasIntradayAccess();
   }
 
@@ -175,12 +170,13 @@ public class CovidCollabFirestore {
       if (checkValidUser(user)) {
         FirebaseUser user1 = cachedUsers.put(user.getId(), user);
         if (user1==null) {
-          logger.info("Created new User: {}", user.getId());
+          logger.debug("Created new User: {}", user.getId());
         } else {
-          logger.info("Updated existing user: {}", user1);
+          logger.debug("Updated existing user: {}", user1);
           logger.debug("Updated user is: {}", user);
         }
         hasPendingUpdates = true;
+        countAdded++;
       } else if (user!=null && !user.isComplete()) {
         logger.info("User is not complete, skipping...");
         removeUser(fitbitDocumentSnapshot);
@@ -198,9 +194,9 @@ public class CovidCollabFirestore {
   /**
    * We add the user based on the following conditions -
    * 1) The user is not null
-   * 2) the user is allowed in the configuration
-   * 3) the user is not excluded in the configuration
-   * 4) The user has not auth errors signified by the auth_result key in firebase
+   * 2) The user has not auth errors signified by the auth_result key in firebase. We accept 409
+   * code too since it is just a concurrent request conflict and does not effect the validity of
+   * the tokens.
    *
    * @param user The user to check for validity
    * @return true if user is valid, false otherwise.
@@ -208,10 +204,10 @@ public class CovidCollabFirestore {
   private boolean checkValidUser(FirebaseUser user) {
     return user!=null
         && user.isComplete()
-        && (allowedUsers.isEmpty() || allowedUsers.contains(user.getId()))
-        && (excludedUsers.isEmpty() || !excludedUsers.contains(user.getId()))
         && (user.getFitbitAuthDetails().getAuthResult()==null
-        || user.getFitbitAuthDetails().getAuthResult().getHttpCode()==200);
+        || user.getFitbitAuthDetails().getAuthResult().getHttpCode()==200
+        || user.getFitbitAuthDetails().getAuthResult().getHttpCode()==409
+    );
   }
 
   private void removeUser(DocumentSnapshot documentSnapshot) {
@@ -234,7 +230,7 @@ public class CovidCollabFirestore {
         snapshots.getDocuments().size());
     for (DocumentChange dc : snapshots.getDocumentChanges()) {
       try {
-        logger.info("Type: {}", dc.getType());
+        logger.debug("Type: {}", dc.getType());
         switch (dc.getType()) {
           case ADDED:
           case MODIFIED:
@@ -252,5 +248,7 @@ public class CovidCollabFirestore {
             exc);
       }
     }
+    logger.info("Added/Updated {} Users", countAdded);
+    countAdded = 0;
   }
 }

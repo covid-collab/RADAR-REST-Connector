@@ -154,6 +154,13 @@ public class FitbitRestSourceConnectorConfig extends RestSourceConnectorConfig {
   private static final String FITBIT_USER_REPOSITORY_FIRESTORE_USER_COLLECTION_DISPLAY = "Firebase User collection name.";
   private static final String FITBIT_USER_REPOSITORY_FIRESTORE_USER_COLLECTION_DEFAULT = "users";
 
+  public static final String FITBIT_TASK_RECONFIGURE_INTERVAL = "fitbit.task.reconfigure.interval";
+  private static final String FITBIT_TASK_RECONFIGURE_INTERVAL_DOC = "How often to check for task" +
+      " reconfiguration in minutes";
+  private static final int FITBIT_TASK_RECONFIGURE_INTERVAL_DEFAULT = 60;
+  private static final String FITBIT_TASK_RECONFIGURE_INTERVAL_DISPLAY = "Task reconfiguration " +
+      "interval in minutes.";
+
   private UserRepository userRepository;
   private final Headers clientCredentials;
 
@@ -401,6 +408,16 @@ public class FitbitRestSourceConnectorConfig extends RestSourceConnectorConfig {
             ++orderInGroup,
             Width.SHORT,
             FITBIT_USER_REPOSITORY_FIRESTORE_USER_COLLECTION_DISPLAY)
+
+        .define(FITBIT_TASK_RECONFIGURE_INTERVAL,
+            Type.INT,
+            FITBIT_TASK_RECONFIGURE_INTERVAL_DEFAULT,
+            Importance.HIGH,
+            FITBIT_TASK_RECONFIGURE_INTERVAL_DOC,
+            group,
+            ++orderInGroup,
+            Width.SHORT,
+            FITBIT_TASK_RECONFIGURE_INTERVAL_DISPLAY)
         ;
   }
 
@@ -534,5 +551,9 @@ public class FitbitRestSourceConnectorConfig extends RestSourceConnectorConfig {
         throw new ConfigException("Fitbit user repository token URL is invalid.");
       }
     }
+  }
+
+  public int getFitbitTaskReconfigureInterval() {
+    return getInt(FITBIT_TASK_RECONFIGURE_INTERVAL);
   }
 }

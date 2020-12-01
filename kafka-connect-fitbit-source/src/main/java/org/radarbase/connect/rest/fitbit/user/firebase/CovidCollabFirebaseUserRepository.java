@@ -34,6 +34,7 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
   private CollectionReference fitbitCollection;
   private FitbitTokenService fitbitTokenService;
   private CovidCollabFirestore covidCollabFirestore;
+  private FitbitRestSourceConnectorConfig fitbitConfig;
 
   @Override
   public User get(String key) throws IOException {
@@ -43,7 +44,7 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
 
   @Override
   public Stream<? extends User> stream() {
-    return covidCollabFirestore.getUsers().stream();
+    return filterUsers();
   }
 
   @Override
@@ -61,7 +62,8 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
   }
 
   @Override
-  public String refreshAccessToken(User user) throws IOException, NotAuthorizedException {
+  public String refreshAccessToken(User user)
+      throws IOException, NotAuthorizedException {
     FirebaseUser firebaseUser = covidCollabFirestore.getUser(user.getId());
     if (firebaseUser==null) {
       throw new NoSuchElementException("User " + user + " is not present in this user repository.");
@@ -88,8 +90,11 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
       updateDocument(fitbitCollection.document(user.getId()), authDetails);
       throw ex;
     } catch (HttpException ex) {
-      authDetails.setAuthResult(ex.getAuthResult());
-      updateDocument(fitbitCollection.document(user.getId()), authDetails);
+      if (ex.getAuthResult().getHttpCode()!=409) {
+        // We don't update on 409 as another process already refreshed the token
+        authDetails.setAuthResult(ex.getAuthResult());
+        updateDocument(fitbitCollection.document(user.getId()), authDetails);
+      }
       throw new NotAuthorizedException("Failed to Refresh Token", ex,
           ex.getAuthResult().getMessage());
     } catch (IOException ex) {
@@ -137,10 +142,9 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
   public void initialize(RestSourceConnectorConfig config) {
     super.initialize(config);
 
-    FitbitRestSourceConnectorConfig fitbitConfig = (FitbitRestSourceConnectorConfig) config;
+    this.fitbitConfig = (FitbitRestSourceConnectorConfig) config;
 
     this.covidCollabFirestore = CovidCollabFirestore.getInstanceFor(fitbitConfig);
-
     this.fitbitCollection =
         getFirestore().collection(fitbitConfig.getFitbitUserRepositoryFirestoreFitbitCollection());
 
@@ -149,5 +153,16 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
             fitbitConfig.getFitbitClient(),
             fitbitConfig.getFitbitClientSecret(),
             FITBIT_TOKEN_ENDPOINT);
+  }
+
+  private Stream<FirebaseUser> filterUsers() {
+    return covidCollabFirestore.getUsers().stream().filter(user ->
+        (
+            fitbitConfig.getFitbitUsers().isEmpty()
+                || fitbitConfig.getFitbitUsers().contains(user.getVersionedId()))
+            && (
+            fitbitConfig.getExcludedFitbitUsers().isEmpty()
+                || !fitbitConfig.getExcludedFitbitUsers().contains(user.getId()))
+    );
   }
 }
