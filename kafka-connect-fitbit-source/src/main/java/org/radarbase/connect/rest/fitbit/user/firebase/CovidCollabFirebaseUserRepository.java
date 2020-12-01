@@ -159,7 +159,7 @@ public class CovidCollabFirebaseUserRepository extends FirebaseUserRepository {
     return covidCollabFirestore.getUsers().stream().filter(user ->
         (
             fitbitConfig.getFitbitUsers().isEmpty()
-                || fitbitConfig.getFitbitUsers().contains(user.getId()))
+                || fitbitConfig.getFitbitUsers().contains(user.getVersionedId()))
             && (
             fitbitConfig.getExcludedFitbitUsers().isEmpty()
                 || !fitbitConfig.getExcludedFitbitUsers().contains(user.getId()))

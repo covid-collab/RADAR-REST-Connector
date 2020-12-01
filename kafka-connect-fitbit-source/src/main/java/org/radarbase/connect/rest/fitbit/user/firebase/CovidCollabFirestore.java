@@ -35,6 +35,7 @@ public class CovidCollabFirestore {
   private final CollectionReference fitbitCollection;
   private ListenerRegistration fitbitCollectionListenerRegistration;
   private boolean hasPendingUpdates = true;
+  private int countAdded = 0;
 
   private CovidCollabFirestore(FitbitRestSourceConnectorConfig fitbitConfig) {
     this.userCollection =
@@ -169,12 +170,13 @@ public class CovidCollabFirestore {
       if (checkValidUser(user)) {
         FirebaseUser user1 = cachedUsers.put(user.getId(), user);
         if (user1==null) {
-          logger.info("Created new User: {}", user.getId());
+          logger.debug("Created new User: {}", user.getId());
         } else {
-          logger.info("Updated existing user: {}", user1);
+          logger.debug("Updated existing user: {}", user1);
           logger.debug("Updated user is: {}", user);
         }
         hasPendingUpdates = true;
+        countAdded++;
       } else if (user!=null && !user.isComplete()) {
         logger.info("User is not complete, skipping...");
         removeUser(fitbitDocumentSnapshot);
@@ -228,7 +230,7 @@ public class CovidCollabFirestore {
         snapshots.getDocuments().size());
     for (DocumentChange dc : snapshots.getDocumentChanges()) {
       try {
-        logger.info("Type: {}", dc.getType());
+        logger.debug("Type: {}", dc.getType());
         switch (dc.getType()) {
           case ADDED:
           case MODIFIED:
@@ -246,5 +248,7 @@ public class CovidCollabFirestore {
             exc);
       }
     }
+    logger.info("Added/Updated {} Users", countAdded);
+    countAdded = 0;
   }
 }
