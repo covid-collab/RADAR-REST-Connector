@@ -37,6 +37,7 @@ import java.util.AbstractMap;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -213,7 +214,7 @@ public abstract class FitbitPollingRoute implements PollingRequestRoute {
   public Instant getTimeOfNextRequest() {
     return nextPolls()
             .min(Comparator.naturalOrder())
-            .orElse(nearFuture());
+            .orElse(Instant.now().plus(Duration.ofMinutes(30)));
   }
 
   private Map<String, Object> getPartition(User user) {
@@ -241,6 +242,10 @@ public abstract class FitbitPollingRoute implements PollingRequestRoute {
           req -> !tooManyRequestsForUser.contains(((FitbitRestRequest)req).getUser()));
     } catch (NotAuthorizedException | IOException ex) {
       logger.warn("User {} does not have a configured access token: {}. Skipping.",
+          user, ex.toString());
+      return null;
+    } catch (NoSuchElementException ex) {
+      logger.warn("User {} does not exist in the user repository: {}. Skipping.",
           user, ex.toString());
       return null;
     }

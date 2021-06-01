@@ -50,7 +50,7 @@ public abstract class FirebaseUserRepository implements UserRepository {
     }
   }
 
-  protected Firestore getFirestore() {
+  public static Firestore getFirestore() {
     return FirestoreClient.getFirestore();
   }
 
@@ -62,7 +62,7 @@ public abstract class FirebaseUserRepository implements UserRepository {
    * @return the document
    * @throws IOException If there was a problem getting the document
    */
-  protected DocumentSnapshot getDocument(String key, CollectionReference collection)
+  public static DocumentSnapshot getDocument(String key, CollectionReference collection)
       throws IOException {
     DocumentSnapshot documentSnapshot;
     try {
@@ -80,7 +80,7 @@ public abstract class FirebaseUserRepository implements UserRepository {
    * @param object The POJO to write to the document
    * @throws IOException If there was a problem updating the document
    */
-  protected void updateDocument(DocumentReference documentReference, Object object)
+  public static void updateDocument(DocumentReference documentReference, Object object)
       throws IOException {
     try {
       documentReference.set(object, SetOptions.merge()).get(20, TimeUnit.SECONDS);
