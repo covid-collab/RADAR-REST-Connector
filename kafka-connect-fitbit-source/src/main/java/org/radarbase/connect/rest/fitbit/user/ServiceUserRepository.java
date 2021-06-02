@@ -22,7 +22,6 @@ import static org.radarbase.connect.rest.fitbit.request.FitbitRequestGenerator.J
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectReader;
-import io.confluent.common.config.ConfigException;
 import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
@@ -44,10 +43,11 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.apache.kafka.common.config.ConfigException;
 import org.radarbase.connect.rest.RestSourceConnectorConfig;
 import org.radarbase.connect.rest.fitbit.FitbitRestSourceConnectorConfig;
-import org.radarcns.exception.TokenException;
-import org.radarcns.oauth.OAuth2Client;
+import org.radarbase.exception.TokenException;
+import org.radarbase.oauth.OAuth2Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
