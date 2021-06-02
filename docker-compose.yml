@@ -13,7 +13,7 @@ services:
   # Zookeeper Cluster                                                         #
   #---------------------------------------------------------------------------#
   zookeeper-1:
-    image: confluentinc/cp-zookeeper:5.1.0
+    image: confluentinc/cp-zookeeper:6.1.0
     networks:
       - kafka
     environment:
@@ -25,7 +25,7 @@ services:
       ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
 
   zookeeper-2:
-    image: confluentinc/cp-zookeeper:5.1.0
+    image: confluentinc/cp-zookeeper:6.1.0
     networks:
       - kafka
     environment:
@@ -37,7 +37,7 @@ services:
       ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
 
   zookeeper-3:
-    image: confluentinc/cp-zookeeper:5.1.0
+    image: confluentinc/cp-zookeeper:6.1.0
     networks:
       - kafka
     environment:
@@ -52,7 +52,7 @@ services:
   # Kafka Cluster                                                             #
   #---------------------------------------------------------------------------#
   kafka-1:
-    image: confluentinc/cp-kafka:5.1.0
+    image: confluentinc/cp-kafka:6.1.0
     networks:
       - kafka
     depends_on:
@@ -73,7 +73,7 @@ services:
       KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
 
   kafka-2:
-    image: confluentinc/cp-kafka:5.1.0
+    image: confluentinc/cp-kafka:6.1.0
     networks:
       - kafka
     depends_on:
@@ -94,7 +94,7 @@ services:
       KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
 
   kafka-3:
-    image: confluentinc/cp-kafka:5.1.0
+    image: confluentinc/cp-kafka:6.1.0
     networks:
       - kafka
     depends_on:
@@ -118,7 +118,7 @@ services:
   # Schema Registry                                                           #
   #---------------------------------------------------------------------------#
   schema-registry-1:
-    image: confluentinc/cp-schema-registry:5.1.0
+    image: confluentinc/cp-schema-registry:6.1.0
     networks:
       - kafka
     depends_on:
@@ -142,7 +142,7 @@ services:
   # REST proxy                                                                #
   #---------------------------------------------------------------------------#
   rest-proxy-1:
-    image: confluentinc/cp-kafka-rest:5.1.0
+    image: confluentinc/cp-kafka-rest:6.1.0
     networks:
       - kafka
     depends_on:
