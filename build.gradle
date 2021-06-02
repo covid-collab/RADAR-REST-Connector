@@ -2,9 +2,9 @@ description = 'kafka-connect-rest-source'
 
 subprojects {
     ext {
-        kafkaVersion = '2.5.0'
-        confluentVersion = '5.5.0'
-        jacksonVersion = '2.11.0'
+        kafkaVersion = '2.7.0'
+        confluentVersion = '6.1.1'
+        jacksonVersion = '2.12.3'
     }
 
     apply plugin: 'java'
@@ -21,8 +21,6 @@ subprojects {
         maven { url "https://packages.confluent.io/maven/" }
         maven { url "https://repo.maven.apache.org/maven2" }
         jcenter()
-        maven { url  "https://dl.bintray.com/radar-cns/org.radarcns" }
-        maven { url  'https://oss.jfrog.org/artifactory/oss-snapshot-local/' }
     }
 }
 
