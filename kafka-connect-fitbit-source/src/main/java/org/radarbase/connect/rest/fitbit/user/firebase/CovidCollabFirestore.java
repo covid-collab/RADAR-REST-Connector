@@ -13,8 +13,8 @@ import com.google.cloud.firestore.ListenerRegistration;
 import com.google.cloud.firestore.QuerySnapshot;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 import org.radarbase.connect.rest.fitbit.FitbitRestSourceConnectorConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -205,9 +205,15 @@ public class CovidCollabFirestore {
     return user!=null
         && user.isComplete()
         && (user.getFitbitAuthDetails().getAuthResult()==null
-        || user.getFitbitAuthDetails().getAuthResult().getHttpCode()==200
-        || user.getFitbitAuthDetails().getAuthResult().getHttpCode()==409
-    );
+        || isStatusValid(user.getFitbitAuthDetails().getAuthResult().getHttpCode()));
+  }
+
+  private boolean isStatusValid(int status) {
+    return status==200
+        // 409: Duplicate requests hence token still valid
+        || status==409
+        // 5xx: Server error on fitbit side (like timeout) hence token still valid
+        || IntStream.range(500, 511).anyMatch(code -> code==status);
   }
 
   private void removeUser(DocumentSnapshot documentSnapshot) {
