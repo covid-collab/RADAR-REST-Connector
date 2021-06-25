@@ -67,6 +67,6 @@ services:
       CONNECT_LOG4J_ROOT_LOGLEVEL: INFO
       CONNECT_PLUGIN_PATH: /usr/share/java,/etc/kafka-connect/jars,/usr/share/java/kafka-connect/plugins
       GOOGLE_APPLICATION_CREDENTIALS: "/google-credentials.json"
-      KAFKA_HEAP_OPTS: "-Xms256m -Xmx768m"
+      KAFKA_HEAP_OPTS: ${KAFKA_HEAP_OPTS}
     ports:
       - 8083:8083
