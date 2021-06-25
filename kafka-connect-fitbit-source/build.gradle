@@ -1,7 +1,7 @@
 dependencies {
     api project(':kafka-connect-rest-source')
     api group: 'io.confluent', name: 'kafka-connect-avro-converter', version: confluentVersion
-    api group: 'org.radarbase', name: 'radar-schemas-commons', version: '0.6.0'
+    api group: 'org.radarbase', name: 'radar-schemas-commons', version: '0.7.0'
 
     implementation group: 'org.radarbase', name: 'oauth-client-util', version: '0.7.1'
 
