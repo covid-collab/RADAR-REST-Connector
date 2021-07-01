@@ -89,8 +89,8 @@ public class FitbitRequestGenerator extends RequestGeneratorRouter {
     localRoutes.add(new FitbitTimeZoneRoute(this, userRepository, avroData));
     localRoutes.add(new FitbitActivityLogRoute(this, userRepository, avroData));
     if (config.hasIntradayAccess()) {
-      localRoutes.add(new FitbitIntradayStepsRoute(this, userRepository, avroData));
       localRoutes.add(new FitbitIntradayHeartRateRoute(this, userRepository, avroData));
+      localRoutes.add(new FitbitIntradayStepsRoute(this, userRepository, avroData));
       localRoutes.add(new FitbitIntradayCaloriesRoute(this, userRepository, avroData));
     }
     return localRoutes;
